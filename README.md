@@ -86,7 +86,7 @@ npm -v
 # Step 4: Clone the Repository
 Install Git:
 ```
-yum install git -y
+sudo yum install git -y
 ```
 
 Clone the project repository:
