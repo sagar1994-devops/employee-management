@@ -1,19 +1,20 @@
-# employee-management<img width="1417" alt="Screenshot 2022-06-14 at 14 47 09" src="https://user-images.githubusercontent.com/64640469/173594367-d363f981-2478-4466-8e3d-738eaf720fd2.png">
-
 # Employee Management Application Deployment Guide
 
 This guide explains how to deploy the **Employee Management Application** using the following tech stack:
 
-* **Frontend:** React
-* **Backend:** Spring Boot
-* **Database:** MySQL (Amazon RDS)
-* **Infrastructure:** Amazon EC2
+* Frontend: React
+* Backend: Spring Boot
+* Database: MySQL (Amazon RDS)
+* Infrastructure: AWS EC2
 
 ---
 
 # Architecture
 
-Frontend (React) → Backend (Spring Boot) → Database (Amazon RDS MySQL)
+User → React Frontend → Spring Boot Backend → MySQL (RDS)
+
+Frontend runs on **port 3000**
+Backend runs on **port 8080**
 
 ---
 
@@ -26,13 +27,13 @@ Database Name: employeedb
 Username: admin
 Password: admin123
 
-Endpoint:
+Endpoint
 
 ```
 database-1.c5yo48g0g39.ap-northeast-1.rds.amazonaws.com
 ```
 
-Make sure the RDS security group allows access from your EC2 instance.
+Make sure the RDS security group allows **MySQL access (port 3306)** from EC2.
 
 ---
 
@@ -40,41 +41,53 @@ Make sure the RDS security group allows access from your EC2 instance.
 
 Launch an EC2 instance and connect using SSH.
 
-Update the system:
+Update the system
 
 ```
 sudo yum update -y
 ```
 
-Install Java (for Spring Boot backend):
+Install Java (required for Spring Boot backend)
 
 ```
 sudo yum install java-21-amazon-corretto-devel -y
 ```
 
-Install Maven:
+Install Maven
 
 ```
 sudo yum install maven -y
+```
+
+Install Git
+
+```
+sudo yum install git -y
+```
+
+Verify Git installation
+
+```
+git --version
 ```
 
 ---
 
 # Step 3: Install Node.js
 
-Install Node.js repository:
+Install Node.js repository
 
 ```
 curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
 ```
 
-Install Node.js and npm:
+Install Node.js and npm
 
 ```
 sudo yum install nodejs -y
 ```
 
-Verify installation:
+Verify installation
 
 ```
 node -v
@@ -84,12 +97,8 @@ npm -v
 ---
 
 # Step 4: Clone the Repository
-Install Git:
-```
-sudo yum install git -y
-```
 
-Clone the project repository:
+Clone the project repository
 
 ```
 git clone https://github.com/sagar1994-devops/employee-management.git
@@ -99,63 +108,59 @@ git clone https://github.com/sagar1994-devops/employee-management.git
 
 # Step 5: Configure Backend
 
-Edit the backend configuration file:
+Edit the backend configuration file
 
 ```
 vi /home/ec2-user/employee-management/employeemanagmentbackend/src/main/resources/application.properties
 ```
 
-Update the database configuration with your RDS details.
+Update database connection details with your RDS information.
 
 ---
 
 # Step 6: Build and Run Backend
 
-Navigate to the backend directory:
+Go to the backend directory
 
 ```
 cd /home/ec2-user/employee-management/employeemanagmentbackend
 ```
 
-Build the application:
+Build the application
 
 ```
 mvn clean package
 ```
 
-Go to the generated artifact folder:
+Go to the generated artifact directory
 
 ```
 cd /home/ec2-user/employee-management/employeemanagmentbackend/target
 ```
 
-Run the Spring Boot application:
+Run the backend service
 
 ```
 java -jar employeemanagmentbackend-0.0.1-SNAPSHOT.jar
 ```
 
-Your backend service will start.
-
-Test it using the EC2 public IP:
+Verify backend
 
 ```
 http://<EC2-PUBLIC-IP>:8080/employee
 ```
 
-Make sure the EC2 **security group allows inbound traffic**.
-
 ---
 
 # Step 7: Configure Frontend
 
-Edit the frontend service configuration file:
+Edit frontend service file
 
 ```
 vi /home/ec2-user/employee-management/employeemanagement-frontend/src/service/EmployeeService.js
 ```
 
-Update the backend URL:
+Update backend URL
 
 ```
 const BASE_URL = "http://<EC2-PUBLIC-IP>:8080/employee";
@@ -165,42 +170,144 @@ const BASE_URL = "http://<EC2-PUBLIC-IP>:8080/employee";
 
 # Step 8: Run Frontend Application
 
-Navigate to the frontend directory:
+Go to the frontend directory
 
 ```
 cd /home/ec2-user/employee-management/employeemanagement-frontend
 ```
 
-Install dependencies:
+Install dependencies
 
 ```
 npm install
 ```
 
-Start the React application:
+Start the React application
 
 ```
 npm start
 ```
 
----
-
-# Step 9: Access the Application
-
-Open your browser and visit:
+Visit the application
 
 ```
 http://<EC2-PUBLIC-IP>:3000
 ```
 
-You should now see the **Employee Management Application running successfully.**
+---
+
+# Step 9: Run Backend as a Service
+
+Create backend service
+
+```
+sudo vi /etc/systemd/system/backend.service
+```
+
+Add
+
+```
+[Unit]
+Description=Spring Boot Backend Service
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/employee-management/employeemanagmentbackend/target
+ExecStart=/usr/bin/java -jar employeemanagmentbackend-0.0.1-SNAPSHOT.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload systemd
+
+```
+sudo systemctl daemon-reload
+```
+
+Start backend
+
+```
+sudo systemctl start backend
+```
+
+Enable auto start
+
+```
+sudo systemctl enable backend
+```
 
 ---
 
-# Notes
+# Step 10: Run Frontend as a Service
 
-* Ensure EC2 security groups allow ports **3000 and 8080**
-* Ensure RDS security group allows inbound **MySQL (3306)** from EC2
-* Replace `<EC2-PUBLIC-IP>` with your actual instance IP
-* Do not expose sensitive credentials in public repositories
+Create frontend service
+
+```
+sudo vi /etc/systemd/system/frontend.service
+```
+
+Add
+
+```
+[Unit]
+Description=React Frontend Service
+After=network.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/employee-management/employeemanagement-frontend
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=5
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload systemd
+
+```
+sudo systemctl daemon-reload
+```
+
+Start frontend
+
+```
+sudo systemctl start frontend
+```
+
+Enable auto start
+
+```
+sudo systemctl enable frontend
+```
+
+---
+
+# Access Application
+
+Frontend
+
+```
+http://<EC2-PUBLIC-IP>:3000
+```
+
+Backend API
+
+```
+http://<EC2-PUBLIC-IP>:8080/employee
+```
+
+---
+
+# Author
+
+Sagar Misal
+DevOps Engineer
 
