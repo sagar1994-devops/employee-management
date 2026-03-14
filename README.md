@@ -204,4 +204,3 @@ You should now see the **Employee Management Application running successfully.**
 * Replace `<EC2-PUBLIC-IP>` with your actual instance IP
 * Do not expose sensitive credentials in public repositories
 
-If you want, I can also help you make a **much more professional README (with diagrams, architecture image, and DevOps deployment flow)** so your GitHub profile looks **strong for DevOps recruiters**.
