@@ -1,7 +1,5 @@
 # employee-management<img width="1417" alt="Screenshot 2022-06-14 at 14 47 09" src="https://user-images.githubusercontent.com/64640469/173594367-d363f981-2478-4466-8e3d-738eaf720fd2.png">
 
-Here is a **clean and professional GitHub README** you can use for your repository.
-
 # Employee Management Application Deployment Guide
 
 This guide explains how to deploy the **Employee Management Application** using the following tech stack:
